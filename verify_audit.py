@@ -1,7 +1,8 @@
-import json
 import hashlib
-import sys
+import json
 from pathlib import Path
+import sys
+
 
 def verify_ledger(filepath):
     path = Path(filepath)
@@ -19,7 +20,9 @@ def verify_ledger(filepath):
 
     del data["au9_sha256_seal"]
     canonical_json = json.dumps(data, indent=2)
-    computed_seal = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+    computed_seal = hashlib.sha256(
+        canonical_json.encode("utf-8")
+    ).hexdigest()
 
     print(f"[*] Framework  : {data.get('framework')}")
     print(f"[*] Timestamp  : {data.get('export_timestamp')}")
@@ -27,12 +30,17 @@ def verify_ledger(filepath):
     print(f"[*] Recorded   : {recorded_seal}")
 
     if computed_seal == recorded_seal:
-        print("[+] VERIFICATION SUCCESS: NIST SP 800-171 AU-9 SEAL INTACT (ZERO DRIFT)")
+        print("[+] VERIFICATION SUCCESS: NIST SP 800-171 AU-9 SEAL INTACT")
         return True
     else:
-        print("[-] VERIFICATION FAILED: INTEGRITY COMPROMISED / HASH MISMATCH")
+        print("[-] VERIFICATION FAILED: INTEGRITY COMPROMISED")
         return False
 
+
 if __name__ == "__main__":
-    target = sys.argv[1] if len(sys.argv) > 1 else str(list(Path.home().glob("storage/downloads/sentinel-audit*.json"))[-1])
+    if len(sys.argv) > 1:
+        target = sys.argv[1]
+    else:
+        dl_path = Path.home() / "storage/downloads"
+        target = str(list(dl_path.glob("sentinel-audit*.json"))[-1])
     verify_ledger(target)
