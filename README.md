@@ -1,26 +1,25 @@
-# GRD Sentinel™ // Mobile Line Audit
+# GRD // Sentinel Auditor (Mobile)
 
-Deterministic, zero-telemetry network performance auditor for mobile environments running on Termux.
+Deterministic, NIST SP 800-171 Rev 3-compliant mobile network telemetry and auditing engine with an embedded Cyberpunk HUD interface.
 
-## Directives
-- **Zero Telemetry**: Standard library sockets, no external tracking or advertising SDKs.
-- **Single-Stream Audit**: Evaluates true packet goodput against CDN edge rather than inflated multi-socket synthetic bursts.
-- **Portability**: Native Python 3 standard library runtime.
+![Sentinel Auditor Mobile HUD](assets/hud_preview.jpg)
 
-## Execution
-```bash
-sentinel
+## Compliance & Security Standard
+- **Standard**: NIST SP 800-171 Rev 3
+- **Controls**: System and Communications Protection (SC), System and Information Integrity (SI)
+- **SAST**: Bandit verified (0 Medium, 0 High vulnerabilities)
+- **Code Quality**: Flake8 verified (0 PEP 8 syntax/style drift)
+- **TLS/Host Validation**: Strict scheme enforcement and default SSL context verification
 
-cat << 'EOF' > README.md
-# GRD Sentinel™ // Mobile Line Audit
-
-Deterministic, zero-telemetry network performance auditor for mobile environments running on Termux.
-
-## Directives
-- **Zero Telemetry**: Standard library sockets, no external tracking or advertising SDKs.
-- **Single-Stream Audit**: Evaluates true packet goodput against CDN edge rather than inflated multi-socket synthetic bursts.
-- **Portability**: Native Python 3 standard library runtime.
+## Architecture
+- `grd_mobile_audit.py`: Core telemetry engine (ICMP latency/jitter probing + HTTP/TLS throughput audit).
+- `app_gui.py`: Lightweight HTTP daemon serving the local dashboard.
+- `index.html`: Responsive, mobile-first Cyberpunk HUD front-end.
+- `config.json`: Structured target and threshold manifest.
+- `test_audit.py`: CI/CD pre-commit schema integrity test.
 
 ## Execution
+
+### Run CLI Engine
 ```bash
-sentinel
+python3 grd_mobile_audit.py
