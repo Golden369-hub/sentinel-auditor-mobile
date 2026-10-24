@@ -147,7 +147,7 @@
 <div class="hud">
   <div class="title-bar">
     <div class="title-text">GRD // SENTINEL</div>
-    <div class="sub-tag">NIST-800-171 // BURST TELEMETRY</div>
+    <div class="sub-tag">NIST-800-171 // MULTI-VECTOR AUDIT</div>
   </div>
   <div class="grid">
     <div class="card">
@@ -163,8 +163,8 @@
       <div class="card-val" id="loss-val" style="color: var(--neon-green);">-- %</div>
     </div>
     <div class="card">
-      <div class="card-lbl">Status</div>
-      <div class="card-val" id="status-val">READY</div>
+      <div class="card-lbl">DNS Latency</div>
+      <div class="card-val" id="dns-val">-- ms</div>
     </div>
     <div class="card card-wide">
       <div class="card-lbl">Throughput Goodput</div>
@@ -175,7 +175,7 @@
   <div class="card-lbl" style="margin-top: 4px;">SHA-256 Audit Nonce</div>
   <div class="hash-box" id="hash-val">STANDBY // NO EXECUTION SIGNATURE</div>
   <button class="btn-run" id="btn-run" onclick="executeScan()">[ EXECUTE TELEMETRY AUDIT ]</button>
-  <div class="terminal" id="term">> SENTINEL HUD ONLINE // SHA-256 READY</div>
+  <div class="terminal" id="term">> SENTINEL HUD ONLINE // DNS AUDIT READY</div>
 </div>
 
 <script>
@@ -189,7 +189,7 @@ function executeScan() {
   const btn = document.getElementById('btn-run');
   btn.disabled = true;
   btn.innerText = "ENGAGED // RUNNING...";
-  printTerm("Starting burst network probe...");
+  printTerm("Starting multi-vector network probe...");
 
   fetch('/api/run_audit')
     .then(res => res.json())
@@ -198,19 +198,20 @@ function executeScan() {
       btn.innerText = "[ EXECUTE TELEMETRY AUDIT ]";
       const ping = data.ping_metrics;
       const dl = data.download_metrics;
+      const dns = data.dns_metrics;
 
       document.getElementById('lat-val').innerText = ping.avg_ms.toFixed(2) + " ms";
       document.getElementById('jit-val').innerText = ping.mdev_ms.toFixed(2) + " ms";
       document.getElementById('loss-val').innerText = ping.packet_loss_pct.toFixed(1) + "%";
-      document.getElementById('status-val').innerText = data.status;
-      document.getElementById('status-val').style.color = (data.status === "PASS") ? "var(--neon-green)" : "#ff0055";
+      document.getElementById('dns-val').innerText = dns.latency_ms.toFixed(2) + " ms";
       document.getElementById('tp-val').innerText = dl.mbps.toFixed(2) + " Mbps";
       document.getElementById('hash-val').innerText = data.sha256_hash;
 
       const pct = Math.min(Math.round((dl.mbps / 500) * 100), 100);
       document.getElementById('bar-fill').style.width = pct + "%";
 
-      printTerm("Audit " + data.status + " // Loss: " + ping.packet_loss_pct + "% // Nonce: " + data.sha256_hash.substring(0, 12) + "...");
+      printTerm("DNS (" + dns.query_host + ") -> " + dns.resolved_ips.join(', '));
+      printTerm("Audit " + data.status + " // Nonce: " + data.sha256_hash.substring(0, 12) + "...");
     })
     .catch(err => {
       btn.disabled = false;

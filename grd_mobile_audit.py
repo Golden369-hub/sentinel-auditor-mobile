@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 import time
 import urllib.parse
@@ -39,6 +40,29 @@ def append_to_ledger(report, ledger_file="audit_ledger.jsonl"):
     return entry_hash
 
 
+def audit_dns(query_host):
+    start_t = time.time()
+    try:
+        addr_info = socket.getaddrinfo(
+            query_host, None, socket.AF_INET, socket.SOCK_STREAM
+        )
+        latency_ms = (time.time() - start_t) * 1000.0
+        resolved_ips = sorted(list({item[4][0] for item in addr_info}))
+        return {
+            "query_host": query_host,
+            "resolved_ips": resolved_ips,
+            "latency_ms": round(latency_ms, 2),
+            "status": "PASS"
+        }
+    except socket.gaierror:
+        return {
+            "query_host": query_host,
+            "resolved_ips": [],
+            "latency_ms": 0.0,
+            "status": "FAIL"
+        }
+
+
 def audit_network(config_path="config.json"):
     with open(config_path, "r", encoding="utf-8") as f:
         cfg = json.load(f)
@@ -47,6 +71,7 @@ def audit_network(config_path="config.json"):
     count = cfg["ping"]["count"]
     dl_url = cfg["throughput"]["url"]
     timeout_s = cfg["throughput"]["timeout_seconds"]
+    query_host = cfg.get("dns", {}).get("query_host", "cloudflare.com")
 
     parsed_url = urllib.parse.urlparse(dl_url)
     if parsed_url.scheme not in ("http", "https"):
@@ -87,11 +112,14 @@ def audit_network(config_path="config.json"):
             "packet_loss_pct": 100.0
         }
 
-    # 2. HTTP/TLS Goodput Audit
+    # 2. DNS Telemetry
+    dns_metrics = audit_dns(query_host)
+
+    # 3. HTTP/TLS Goodput Audit
     start_t = time.time()
     req = urllib.request.Request(
         dl_url,
-        headers={"User-Agent": "GRD-Sentinel-Auditor/1.2"}
+        headers={"User-Agent": "GRD-Sentinel-Auditor/1.3"}
     )
     with urllib.request.urlopen(  # nosec B310
         req, timeout=timeout_s
@@ -107,14 +135,21 @@ def audit_network(config_path="config.json"):
         "mbps": mbps
     }
 
+    status = (
+        "PASS"
+        if (packet_loss_pct == 0.0 and dns_metrics["status"] == "PASS")
+        else "DEGRADED"
+    )
+
     report = {
         "timestamp": int(time.time()),
         "ping_metrics": ping_metrics,
+        "dns_metrics": dns_metrics,
         "download_metrics": download_metrics,
-        "status": "PASS" if packet_loss_pct == 0.0 else "DEGRADED"
+        "status": status
     }
 
-    # 3. Cryptographic Ledger Append
+    # 4. Cryptographic Ledger Append
     report["sha256_hash"] = append_to_ledger(report)
     return report
 
