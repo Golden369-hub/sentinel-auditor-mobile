@@ -1,17 +1,20 @@
 {
   "ping": {
     "target": "1.1.1.1",
-    "count": 4
+    "count": 5
   },
   "dns": {
-    "query_host": "cloudflare.com",
-    "primary_resolver": "1.1.1.1",
-    "secondary_resolver": "9.9.9.9",
-    "timeout_seconds": 3
+    "query_host": "cloudflare.com"
   },
   "throughput": {
     "url": "https://speed.cloudflare.com/__down?bytes=25000000",
-    "timeout_seconds": 8,
-    "chunk_size": 65536
+    "timeout_seconds": 10
+  },
+  "sla_thresholds": {
+    "max_avg_latency_ms": 60.0,
+    "max_jitter_ms": 15.0,
+    "max_packet_loss_pct": 0.0,
+    "max_dns_latency_ms": 25.0,
+    "min_throughput_mbps": 50.0
   }
 }
