@@ -3,9 +3,30 @@ import re
 import time
 import urllib.request
 import ssl
+import json
+import os
 
-def audit_ping(host="1.1.1.1", count=4):
-    cmd = ["ping", "-c", str(count), host]
+CONFIG_PATH = os.path.expanduser("~/grd_mobile/config.json")
+
+def load_config():
+    defaults = {
+        "ping": {"target": "1.1.1.1", "count": 4},
+        "throughput": {
+            "url": "https://speed.cloudflare.com/__down?bytes=25000000",
+            "timeout_seconds": 8,
+            "chunk_size": 65536
+        }
+    }
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r") as f:
+                return json.load(f)
+        except Exception:
+            return defaults
+    return defaults
+
+def audit_ping(target, count):
+    cmd = ["ping", "-c", str(count), target]
     res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     latencies = [float(x) for x in re.findall(r"time=([\d\.]+)\s*ms", res.stdout)]
     if not latencies:
@@ -14,8 +35,7 @@ def audit_ping(host="1.1.1.1", count=4):
     jitter = round(max(latencies) - min(latencies), 2)
     return {"avg_ms": avg_lat, "jitter_ms": jitter}
 
-def audit_download():
-    url = "https://speed.cloudflare.com/__down?bytes=25000000"
+def audit_download(url, timeout, chunk_size):
     headers = {"User-Agent": "Mozilla/5.0"}
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -24,13 +44,13 @@ def audit_download():
     try:
         req = urllib.request.Request(url, headers=headers)
         start_time = time.time()
-        with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
+        with urllib.request.urlopen(req, context=ctx, timeout=timeout) as response:
             while True:
-                chunk = response.read(65536)
+                chunk = response.read(chunk_size)
                 if not chunk:
                     break
                 total_bytes += len(chunk)
-                if time.time() - start_time > 8:
+                if time.time() - start_time > timeout:
                     break
         duration = time.time() - start_time
         if duration <= 0 or total_bytes == 0:
@@ -42,16 +62,24 @@ def audit_download():
         return 0.0
 
 def main():
+    cfg = load_config()
+    p_cfg = cfg.get("ping", {})
+    t_cfg = cfg.get("throughput", {})
+
     print("=============================================")
     print("  GRD SENTINEL™ // MOBILE WI-FI AUDIT")
-    print("  Zero Telemetry | Pure Standard Library")
+    print("  Zero Telemetry | Config-Driven Architecture")
     print("=============================================")
-    print("[*] Auditing Ping & Jitter to 1.1.1.1...")
-    ping_data = audit_ping()
+    print(f"[*] Auditing Ping & Jitter to {p_cfg.get('target', '1.1.1.1')}...")
+    ping_data = audit_ping(p_cfg.get("target", "1.1.1.1"), p_cfg.get("count", 4))
     print(f"    Avg Latency: {ping_data['avg_ms']} ms")
     print(f"    Jitter     : {ping_data['jitter_ms']} ms")
     print("[*] Auditing Wi-Fi Goodput (Cloudflare CDN)...")
-    speed = audit_download()
+    speed = audit_download(
+        t_cfg.get("url", "https://speed.cloudflare.com/__down?bytes=25000000"),
+        t_cfg.get("timeout_seconds", 8),
+        t_cfg.get("chunk_size", 65536)
+    )
     print(f"    Throughput : {speed} Mbps")
     print("=============================================")
     print("[+] Audit Complete.")
