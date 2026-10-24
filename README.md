@@ -1,5 +1,7 @@
 # GRD // Sentinel Auditor (Mobile)
 
+![Cyberpunk HUD Preview](assets/hud_preview.jpg)
+
 Deterministic, NIST SP 800-171 Rev 3-compliant mobile network telemetry and auditing engine with an embedded Cyberpunk HUD interface.
 
 
