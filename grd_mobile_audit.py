@@ -40,6 +40,39 @@ def append_to_ledger(report, ledger_file="audit_ledger.jsonl"):
     return entry_hash
 
 
+def audit_isp(timeout_s=5):
+    url = "https://ipinfo.io/json"
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "curl/7.88.1"}
+    )
+    try:
+        with urllib.request.urlopen(  # nosec B310
+            req, timeout=timeout_s
+        ) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            org_raw = data.get("org", "UNKNOWN")
+            asn = org_raw.split(" ")[0] if " " in org_raw else "UNKNOWN"
+            isp = org_raw.split(" ", 1)[1] if " " in org_raw else org_raw
+            return {
+                "client_ip": data.get("ip", "UNKNOWN"),
+                "isp": isp,
+                "asn": asn,
+                "city": data.get("city", "UNKNOWN"),
+                "region": data.get("region", "UNKNOWN"),
+                "status": "PASS"
+            }
+    except Exception:
+        return {
+            "client_ip": "UNKNOWN",
+            "isp": "UNKNOWN_CARRIER",
+            "asn": "UNKNOWN",
+            "city": "UNKNOWN",
+            "region": "UNKNOWN",
+            "status": "DEGRADED"
+        }
+
+
 def audit_dns(query_host):
     start_t = time.time()
     try:
@@ -77,7 +110,10 @@ def audit_network(config_path="config.json"):
     if parsed_url.scheme not in ("http", "https"):
         raise ValueError(f"Disallowed protocol scheme: {parsed_url.scheme}")
 
-    # 1. ICMP Burst & Packet Loss Telemetry
+    # 1. Carrier & Routing Metadata
+    isp_metrics = audit_isp(timeout_s=timeout_s)
+
+    # 2. ICMP Burst & Packet Loss Telemetry
     cmd = ["ping", "-c", str(count), "-W", str(timeout_s), host]
     res = subprocess.run(
         cmd,
@@ -112,14 +148,14 @@ def audit_network(config_path="config.json"):
             "packet_loss_pct": 100.0
         }
 
-    # 2. DNS Telemetry
+    # 3. DNS Telemetry
     dns_metrics = audit_dns(query_host)
 
-    # 3. HTTP/TLS Goodput Audit
+    # 4. HTTP/TLS Goodput Audit
     start_t = time.time()
     req = urllib.request.Request(
         dl_url,
-        headers={"User-Agent": "GRD-Sentinel-Auditor/1.3"}
+        headers={"User-Agent": "GRD-Sentinel-Auditor/1.4"}
     )
     with urllib.request.urlopen(  # nosec B310
         req, timeout=timeout_s
@@ -143,13 +179,14 @@ def audit_network(config_path="config.json"):
 
     report = {
         "timestamp": int(time.time()),
+        "isp_metrics": isp_metrics,
         "ping_metrics": ping_metrics,
         "dns_metrics": dns_metrics,
         "download_metrics": download_metrics,
         "status": status
     }
 
-    # 4. Cryptographic Ledger Append
+    # 5. Cryptographic Ledger Append
     report["sha256_hash"] = append_to_ledger(report)
     return report
 

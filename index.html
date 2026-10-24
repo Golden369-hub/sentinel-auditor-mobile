@@ -88,6 +88,15 @@
     color: #fff;
     margin-top: 2px;
   }
+  .card-val-sm {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: var(--neon-cyan);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .bar-container {
     width: 100%;
     height: 6px;
@@ -147,9 +156,13 @@
 <div class="hud">
   <div class="title-bar">
     <div class="title-text">GRD // SENTINEL</div>
-    <div class="sub-tag">NIST-800-171 // MULTI-VECTOR AUDIT</div>
+    <div class="sub-tag">NIST-800-171 // CARRIER AUDIT</div>
   </div>
   <div class="grid">
+    <div class="card card-wide">
+      <div class="card-lbl">Active ISP // Autonomous System</div>
+      <div class="card-val-sm" id="isp-val">DETECTING NETWORK...</div>
+    </div>
     <div class="card">
       <div class="card-lbl">Latency (Avg)</div>
       <div class="card-val" id="lat-val">-- ms</div>
@@ -175,7 +188,7 @@
   <div class="card-lbl" style="margin-top: 4px;">SHA-256 Audit Nonce</div>
   <div class="hash-box" id="hash-val">STANDBY // NO EXECUTION SIGNATURE</div>
   <button class="btn-run" id="btn-run" onclick="executeScan()">[ EXECUTE TELEMETRY AUDIT ]</button>
-  <div class="terminal" id="term">> SENTINEL HUD ONLINE // DNS AUDIT READY</div>
+  <div class="terminal" id="term">> SENTINEL HUD ONLINE // CARRIER SENSOR READY</div>
 </div>
 
 <script>
@@ -189,7 +202,7 @@ function executeScan() {
   const btn = document.getElementById('btn-run');
   btn.disabled = true;
   btn.innerText = "ENGAGED // RUNNING...";
-  printTerm("Starting multi-vector network probe...");
+  printTerm("Starting multi-vector carrier audit...");
 
   fetch('/api/run_audit')
     .then(res => res.json())
@@ -199,7 +212,9 @@ function executeScan() {
       const ping = data.ping_metrics;
       const dl = data.download_metrics;
       const dns = data.dns_metrics;
+      const isp = data.isp_metrics;
 
+      document.getElementById('isp-val').innerText = isp.isp + " (" + isp.asn + ") // " + isp.city;
       document.getElementById('lat-val').innerText = ping.avg_ms.toFixed(2) + " ms";
       document.getElementById('jit-val').innerText = ping.mdev_ms.toFixed(2) + " ms";
       document.getElementById('loss-val').innerText = ping.packet_loss_pct.toFixed(1) + "%";
@@ -210,7 +225,7 @@ function executeScan() {
       const pct = Math.min(Math.round((dl.mbps / 500) * 100), 100);
       document.getElementById('bar-fill').style.width = pct + "%";
 
-      printTerm("DNS (" + dns.query_host + ") -> " + dns.resolved_ips.join(', '));
+      printTerm("Carrier: " + isp.isp + " [" + isp.asn + "] " + isp.client_ip);
       printTerm("Audit " + data.status + " // Nonce: " + data.sha256_hash.substring(0, 12) + "...");
     })
     .catch(err => {
