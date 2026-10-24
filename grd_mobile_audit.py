@@ -1,50 +1,44 @@
-import subprocess
-import re
-import time
-import urllib.request
-import ssl
+#!/usr/bin/env python3
 import json
 import os
+import ssl
+import subprocess
+import time
+import urllib.request
 
-CONFIG_PATH = os.path.expanduser("~/grd_mobile/config.json")
+def run_ping_test(host, count=4):
+    cmd = ["ping", "-c", str(count), host]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        lines = res.stdout.strip().split("\n")
+        stats_line = [l for l in lines if "rtt min/avg/max/mdev" in l or "round-trip" in l]
+        if stats_line:
+            parts = stats_line[0].split("=")[1].strip().split("/")
+            return {
+                "min_ms": float(parts[0]),
+                "avg_ms": float(parts[1]),
+                "max_ms": float(parts[2]),
+                "mdev_ms": float(parts[3].split()[0])
+            }
+    except Exception:
+        pass
+    return None
 
-def load_config():
-    defaults = {
-        "ping": {"target": "1.1.1.1", "count": 4},
-        "throughput": {
-            "url": "https://speed.cloudflare.com/__down?bytes=25000000",
-            "timeout_seconds": 8,
-            "chunk_size": 65536
-        }
-    }
-    if os.path.exists(CONFIG_PATH):
-        try:
-            with open(CONFIG_PATH, "r") as f:
-                return json.load(f)
-        except Exception:
-            return defaults
-    return defaults
+def run_download_test(url, timeout=10, chunk_size=65536):
+    if not url.lower().startswith(("https://", "http://")):
+        raise ValueError(f"Disallowed URL scheme: {url}")
 
-def audit_ping(target, count):
-    cmd = ["ping", "-c", str(count), target]
-    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    latencies = [float(x) for x in re.findall(r"time=([\d\.]+)\s*ms", res.stdout)]
-    if not latencies:
-        return {"avg_ms": 0.0, "jitter_ms": 0.0}
-    avg_lat = round(sum(latencies) / len(latencies), 2)
-    jitter = round(max(latencies) - min(latencies), 2)
-    return {"avg_ms": avg_lat, "jitter_ms": jitter}
-
-def audit_download(url, timeout, chunk_size):
-    headers = {"User-Agent": "Mozilla/5.0"}
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    ctx.check_hostname = True
+    ctx.verify_mode = ssl.CERT_REQUIRED
+
+    headers = {"User-Agent": "GRD-Sentinel-Auditor/1.0"}
     total_bytes = 0
+    start_time = time.time()
+
     try:
         req = urllib.request.Request(url, headers=headers)
-        start_time = time.time()
-        with urllib.request.urlopen(req, context=ctx, timeout=timeout) as response:
+        with urllib.request.urlopen(req, context=ctx, timeout=timeout) as response:  # nosec B310
             while True:
                 chunk = response.read(chunk_size)
                 if not chunk:
@@ -53,36 +47,32 @@ def audit_download(url, timeout, chunk_size):
                 if time.time() - start_time > timeout:
                     break
         duration = time.time() - start_time
-        if duration <= 0 or total_bytes == 0:
-            return 0.0
-        mbps = round((total_bytes * 8) / (duration * 1024 * 1024), 2)
-        return mbps
+        mbps = (total_bytes * 8) / (duration * 1_000_000)
+        return {"bytes_transferred": total_bytes, "duration_s": duration, "mbps": mbps}
     except Exception as e:
-        print(f"    [DEBUG] Stream Error: {e}")
-        return 0.0
+        return {"error": str(e)}
 
-def main():
-    cfg = load_config()
-    p_cfg = cfg.get("ping", {})
-    t_cfg = cfg.get("throughput", {})
+def audit_network(config_file="config.json"):
+    if not os.path.exists(config_file):
+        raise FileNotFoundError(f"Configuration file missing: {config_file}")
 
-    print("=============================================")
-    print("  GRD SENTINEL™ // MOBILE WI-FI AUDIT")
-    print("  Zero Telemetry | Config-Driven Architecture")
-    print("=============================================")
-    print(f"[*] Auditing Ping & Jitter to {p_cfg.get('target', '1.1.1.1')}...")
-    ping_data = audit_ping(p_cfg.get("target", "1.1.1.1"), p_cfg.get("count", 4))
-    print(f"    Avg Latency: {ping_data['avg_ms']} ms")
-    print(f"    Jitter     : {ping_data['jitter_ms']} ms")
-    print("[*] Auditing Wi-Fi Goodput (Cloudflare CDN)...")
-    speed = audit_download(
-        t_cfg.get("url", "https://speed.cloudflare.com/__down?bytes=25000000"),
-        t_cfg.get("timeout_seconds", 8),
-        t_cfg.get("chunk_size", 65536)
-    )
-    print(f"    Throughput : {speed} Mbps")
-    print("=============================================")
-    print("[+] Audit Complete.")
+    with open(config_file, "r") as f:
+        cfg = json.load(f)
+
+    target_host = cfg.get("ping_target", "8.8.8.8")
+    download_url = cfg.get("test_download_url", "https://proof.ovh.net/files/10Mb.dat")
+
+    ping_result = run_ping_test(target_host)
+    dl_result = run_download_test(download_url)
+
+    report = {
+        "timestamp": int(time.time()),
+        "ping_metrics": ping_result,
+        "download_metrics": dl_result,
+        "status": "PASS" if ping_result and "error" not in dl_result else "FAIL"
+    }
+    return report
 
 if __name__ == "__main__":
-    main()
+    report = audit_network()
+    print(json.dumps(report, indent=2))
