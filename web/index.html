@@ -11,6 +11,7 @@
   --accent-cyan: #00e5ff;
   --accent-green: #00e676;
   --accent-amber: #ffb300;
+  --accent-red: #ff5252;
   --text-main: #e0e6ed;
   --text-dim: #78909c;
   --border-dim: #1e293b;
@@ -28,6 +29,11 @@ header {
   border-bottom: 1px solid var(--border-dim);
   padding-bottom: 16px;
   margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 .brand {
   font-family: var(--font-mono);
@@ -38,6 +44,27 @@ header {
 .tagline {
   font-size: 0.85rem;
   color: var(--text-dim);
+}
+.btn-action {
+  background: transparent;
+  color: var(--accent-cyan);
+  border: 1px solid var(--accent-cyan);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-action:hover {
+  background: var(--accent-cyan);
+  color: var(--bg-core);
+}
+.btn-action:disabled {
+  border-color: var(--text-dim);
+  color: var(--text-dim);
+  cursor: not-allowed;
 }
 .grid {
   display: grid;
@@ -120,8 +147,13 @@ footer {
 <body>
 
 <header>
-  <div class="brand">GRD SENTINEL // AUDITOR PORTAL</div>
-  <div class="tagline">NIST SP 800-171 Telemetry & Cryptographic Verification Platform</div>
+  <div>
+    <div class="brand">GRD SENTINEL // AUDITOR PORTAL</div>
+    <div class="tagline">NIST SP 800-171 Telemetry & Cryptographic Verification Platform</div>
+  </div>
+  <div>
+    <button class="btn-action" id="btn-audit" onclick="triggerAudit()">RUN LINE AUDIT</button>
+  </div>
 </header>
 
 <div class="grid">
@@ -226,6 +258,29 @@ async function fetchTrace() {
   } catch (e) {
     console.error('Trace error:', e);
   }
+}
+
+async function triggerAudit() {
+  const btn = document.getElementById('btn-audit');
+  btn.disabled = true;
+  btn.textContent = 'AUDITING...';
+  try {
+    const res = await fetch('/api/run-audit', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      btn.textContent = 'AUDIT COMPLETE';
+      setTimeout(updateHUD, 500);
+      setTimeout(fetchTrace, 1000);
+    } else {
+      btn.textContent = 'AUDIT FAILED';
+    }
+  } catch (e) {
+    btn.textContent = 'ERROR';
+  }
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = 'RUN LINE AUDIT';
+  }, 4000);
 }
 
 setInterval(updateHUD, 5000);

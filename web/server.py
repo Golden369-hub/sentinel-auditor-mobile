@@ -8,7 +8,8 @@ import subprocess  # nosec B404
 import sys
 
 PORT = 8080
-LEDGER_PATH = os.path.expanduser("~/grd_mobile/audit_ledger.jsonl")
+REPO_DIR = os.path.expanduser("~/grd_mobile")
+LEDGER_PATH = os.path.join(REPO_DIR, "audit_ledger.jsonl")
 WEB_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -86,13 +87,43 @@ class SentinelRequestHandler(http.server.SimpleHTTPRequestHandler):
         else:
             super().do_GET()
 
+    def do_POST(self):
+        if self.path == "/api/run-audit":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            audit_script = os.path.join(REPO_DIR, "grd_mobile_audit.py")
+            try:
+                proc = subprocess.run(  # nosec B603
+                    [sys.executable, audit_script],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=30,
+                    cwd=REPO_DIR
+                )
+                res = {
+                    "success": proc.returncode == 0,
+                    "returncode": proc.returncode,
+                    "output": proc.stdout
+                }
+            except Exception as e:
+                res = {"success": False, "error": str(e)}
+
+            self.wfile.write(json.dumps(res).encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.end_headers()
+
 
 def run_server():
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), SentinelRequestHandler) as httpd:
         print("-" * 50)
         print(f"GRD SENTINEL // TELEMETRY BRIDGE ONLINE: PORT {PORT}")
-        print("API Endpoints: /api/telemetry | /api/trace")
+        print("API Endpoints: /api/telemetry | /api/trace | /api/run-audit")
         print(f"Static Portal: http://localhost:{PORT}")
         print("-" * 50)
         try:
