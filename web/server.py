@@ -92,7 +92,7 @@ def run_server():
     with socketserver.TCPServer(("", PORT), SentinelRequestHandler) as httpd:
         print("-" * 50)
         print(f"GRD SENTINEL // TELEMETRY BRIDGE ONLINE: PORT {PORT}")
-        print(f"API Endpoints: /api/telemetry | /api/trace")
+        print("API Endpoints: /api/telemetry | /api/trace")
         print(f"Static Portal: http://localhost:{PORT}")
         print("-" * 50)
         try:
