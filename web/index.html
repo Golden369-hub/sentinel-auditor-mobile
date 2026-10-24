@@ -114,12 +114,12 @@ footer {
 <div class="grid">
   <div class="card">
     <h2>Active Telemetry</h2>
-    <div class="metric"><span>Interface</span><span class="val">wlan0 (Wi-Fi 6)</span></div>
-    <div class="metric"><span>Gateway Subnet</span><span class="val">10.0.0.1</span></div>
-    <div class="metric"><span>Ping RTT (Avg)</span><span class="val">34.51 ms</span></div>
-    <div class="metric"><span>Packet Loss</span><span class="val">0.0%</span></div>
-    <div class="metric"><span>Single-Stream Goodput</span><span class="val">310.46 Mbps</span></div>
-    <div class="metric"><span>Status</span><span class="status-pill pill-pass">OPERATIONAL</span></div>
+    <div class="metric"><span>Carrier Node</span><span class="val" id="val-carrier">--</span></div>
+    <div class="metric"><span>Client IP</span><span class="val" id="val-ip">--</span></div>
+    <div class="metric"><span>Ping RTT (Avg)</span><span class="val" id="val-rtt">--</span></div>
+    <div class="metric"><span>Packet Loss</span><span class="val" id="val-loss">--</span></div>
+    <div class="metric"><span>Single-Stream</span><span class="val" id="val-speed">--</span></div>
+    <div class="metric"><span>Telemetry Status</span><span class="status-pill pill-pass" id="val-telemetry-status">ONLINE</span></div>
   </div>
 
   <div class="card">
@@ -128,34 +128,65 @@ footer {
     <div class="metric"><span>Jitter Tolerance</span><span>&lt; 15.0 ms</span></div>
     <div class="metric"><span>DNS Resolution Cap</span><span>&lt; 25.0 ms</span></div>
     <div class="metric"><span>Floor Bandwidth</span><span>&gt; 50.0 Mbps</span></div>
-    <div class="metric"><span>Latest SLA Verdict</span><span class="status-pill pill-breach">SLA_BREACH (Jitter)</span></div>
+    <div class="metric"><span>Latest SLA Verdict</span><span class="status-pill pill-pass" id="val-sla-status">EVALUATING</span></div>
   </div>
 
   <div class="card">
     <h2>AU-9 Ledger Security</h2>
-    <div class="metric"><span>Total Verified Blocks</span><span class="val">17</span></div>
+    <div class="metric"><span>Total Logged Blocks</span><span class="val" id="val-blocks">--</span></div>
     <div class="metric"><span>Hashing Standard</span><span class="val">SHA-256</span></div>
     <div class="metric"><span>Chain State</span><span class="val">PASS (Zero Drift)</span></div>
-    <div class="metric"><span>Root Nonce</span><span class="val">a6a1c219...</span></div>
+    <div class="metric"><span>Root Nonce</span><span class="val" id="val-nonce">--</span></div>
   </div>
 </div>
 
 <div class="card">
   <h2>Live Cryptographic Ledger Head</h2>
-  <div class="console-box">{
-  "timestamp": 1792834228,
-  "carrier": "T-Mobile USA / Comcast Cable",
-  "client_ip": "64.13.23.0",
-  "verified_blocks": 17,
-  "root_head_hash": "a6a1c21937491f840e2a9b4447350b9e5f4dce96be77423fde0fe5c741b08563",
-  "compliance": "NIST SP 800-171 AU-6 / AU-9",
-  "status": "PASS"
-}</div>
+  <div class="console-box" id="val-raw-json">Waiting for telemetry bridge...</div>
 </div>
 
 <footer>
   GOLDEN RATIO DYNAMICS // ZERO-BLOAT TELEMETRY // SECURE RUNTIME
 </footer>
+
+<script>
+async function updateHUD() {
+  try {
+    const res = await fetch('/api/telemetry');
+    const data = await res.json();
+    if (data.status === 'PASS' && data.latest_record) {
+      const rec = data.latest_record;
+      const t = rec.telemetry || rec;
+
+      document.getElementById('val-carrier').textContent = t.isp_metrics ? t.isp_metrics.isp : 'N/A';
+      document.getElementById('val-ip').textContent = t.isp_metrics ? t.isp_metrics.client_ip : 'N/A';
+      document.getElementById('val-rtt').textContent = t.ping_metrics ? (t.ping_metrics.avg_ms + ' ms') : '--';
+      document.getElementById('val-loss').textContent = t.ping_metrics ? (t.ping_metrics.packet_loss_pct + '%') : '0.0%';
+      document.getElementById('val-speed').textContent = t.download_metrics ? (t.download_metrics.mbps.toFixed(2) + ' Mbps') : '--';
+      document.getElementById('val-blocks').textContent = data.blocks_logged;
+      
+      const nonce = rec.entry_hash || rec.sha256_hash || '--';
+      document.getElementById('val-nonce').textContent = nonce.substring(0, 12) + '...';
+
+      const jitter = t.ping_metrics ? t.ping_metrics.mdev_ms : 0;
+      const slaElem = document.getElementById('val-sla-status');
+      if (jitter > 15.0) {
+        slaElem.className = 'status-pill pill-breach';
+        slaElem.textContent = 'SLA_BREACH (Jitter)';
+      } else {
+        slaElem.className = 'status-pill pill-pass';
+        slaElem.textContent = 'COMPLIANT';
+      }
+
+      document.getElementById('val-raw-json').textContent = JSON.stringify(rec, null, 2);
+    }
+  } catch (e) {
+    document.getElementById('val-raw-json').textContent = 'Error contacting bridge: ' + e.message;
+  }
+}
+setInterval(updateHUD, 5000);
+updateHUD();
+</script>
 
 </body>
 </html>
