@@ -1,5 +1,9 @@
 # GRD // Sentinel Auditor (Mobile)
 
+[![Live Demo](https://img.shields.io/badge/GitHub_Pages-Live_HUD-00ffcc?style=flat-square&logo=github)](https://golden369-hub.github.io/sentinel-auditor-mobile/)
+
+**Live Interface:** https://golden369-hub.github.io/sentinel-auditor-mobile/
+
 
 Deterministic, NIST SP 800-171 Rev 3-compliant mobile network telemetry and auditing engine with an embedded Cyberpunk HUD interface.
 
