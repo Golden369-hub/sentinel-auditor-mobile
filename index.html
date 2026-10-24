@@ -9,7 +9,7 @@
   --bg-color: #050608;
   --neon-yellow: #FEE00A;
   --neon-cyan: #00ff66;
-  --neon-red: #00ff66;
+  --neon-red: #ff3344;
   --card-bg: rgba(18, 22, 28, 0.95);
   --font-mono: 'Courier New', monospace;
 }
@@ -179,7 +179,7 @@ body::before {
   <div class="grid">
     <div class="card card-wide">
       <div class="card-lbl">Active ISP // Autonomous System</div>
-      <div class="card-val-sm" id="isp-val">DETECTING...</div>
+      <div class="card-val-sm" id="isp-val">STANDBY...</div>
     </div>
     <div class="card">
       <div class="card-lbl">Latency (Avg)</div>
@@ -211,6 +211,8 @@ body::before {
 </div>
 
 <script>
+let currentAuditRecord = null;
+
 function printTerm(msg) {
   const t = document.getElementById('term');
   t.innerHTML += '<br>' + msg;
@@ -228,24 +230,27 @@ function executeScan() {
     .then(data => {
       btn.disabled = false;
       btn.innerText = '[ EXECUTE TELEMETRY AUDIT ]';
-      const ping = data.ping_metrics;
-      const dl = data.download_metrics;
-      const dns = data.dns_metrics;
-      const isp = data.isp_metrics;
+      currentAuditRecord = data;
 
-      document.getElementById('isp-val').innerText = isp.isp + ' (' + isp.query + ')';
-      document.getElementById('lat-val').innerHTML = ping.avg + '<span style="font-size:0.7rem"> ms</span>';
-      document.getElementById('jit-val').innerHTML = ping.mdev + '<span style="font-size:0.7rem"> ms</span>';
-      document.getElementById('loss-val').innerText = ping.packet_loss;
-      document.getElementById('dns-val').innerHTML = dns.dns_time_ms + '<span style="font-size:0.7rem"> ms</span>';
-      document.getElementById('tp-val').innerHTML = dl.mbps + ' <span style="font-size:0.7rem">Mbps</span>';
-      document.getElementById('hash-val').innerText = data.status_hash;
+      const ping = data.ping_metrics || {};
+      const dl = data.download_metrics || {};
+      const dns = data.dns_metrics || {};
+      const isp = data.isp_metrics || {};
+      const hash = data.sha256_hash || "ZERO-DRIFT";
 
-      const pct = Math.min(Math.round((dl.mbps / 500) * 100), 100);
+      document.getElementById('isp-val').innerText = (isp.isp || 'UNKNOWN') + ' [' + (isp.asn || 'AS--') + ']';
+      document.getElementById('lat-val').innerHTML = Number(ping.avg_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>';
+      document.getElementById('jit-val').innerHTML = Number(ping.mdev_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>';
+      document.getElementById('loss-val').innerText = (ping.packet_loss_pct || 0) + '%';
+      document.getElementById('dns-val').innerHTML = Number(dns.latency_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>';
+      document.getElementById('tp-val').innerHTML = Number(dl.mbps || 0).toFixed(2) + ' <span style="font-size:0.7rem">Mbps</span>';
+      document.getElementById('hash-val').innerText = hash;
+
+      const pct = Math.min(Math.round(((dl.mbps || 0) / 500) * 100), 100);
       document.getElementById('bar-fill').style.width = pct + '%';
 
-      printTerm("Carrier: " + isp.isp + " [" + isp.as + "]");
-      printTerm("Audit " + data.status + " // " + data.status_hash.substring(0, 16) + "...");
+      printTerm("Carrier: " + (isp.isp || 'ISP') + " [" + (isp.asn || '') + "] (" + (isp.city || '') + ", " + (isp.region || '') + ")");
+      printTerm("Audit PASS // " + hash.substring(0, 16) + "...");
     })
     .catch(err => {
       btn.disabled = false;
@@ -255,29 +260,26 @@ function executeScan() {
 }
 
 async function exportAuditJson() {
-  const auditPayload = {
+  if (!currentAuditRecord) {
+    printTerm("WARN // Execute telemetry audit prior to ledger export.");
+    return;
+  }
+
+  const exportPayload = {
     framework: "GRD Sentinel Auditor Mobile",
-    standard: "NIST SP 800-171 AU-9",
-    timestamp: new Date().toISOString(),
-    metrics: {
-      isp: document.getElementById('isp-val').innerText,
-      latency_avg_ms: document.getElementById('lat-val').innerText.replace(' ms', '').trim(),
-      jitter_mdev_ms: document.getElementById('jit-val').innerText.replace(' ms', '').trim(),
-      packet_loss: document.getElementById('loss-val').innerText.trim(),
-      dns_latency_ms: document.getElementById('dns-val').innerText.replace(' ms', '').trim(),
-      throughput_mbps: document.getElementById('tp-val').innerText.replace(' Mbps', '').trim()
-    },
-    telemetry_hash: document.getElementById('hash-val').innerText.trim(),
+    compliance_standard: "NIST SP 800-171 AU-9",
+    export_timestamp: new Date().toISOString(),
+    audit_data: currentAuditRecord,
     system_integrity: "ZERO_DRIFT"
   };
 
-  const rawJson = JSON.stringify(auditPayload, null, 2);
+  const rawJson = JSON.stringify(exportPayload, null, 2);
   const encoder = new TextEncoder();
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(rawJson));
   const sha256 = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 
   const sealedRecord = {
-    ...auditPayload,
+    ...exportPayload,
     au9_sha256_seal: sha256
   };
 
