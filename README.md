@@ -2,7 +2,6 @@
 
 Deterministic, NIST SP 800-171 Rev 3-compliant mobile network telemetry and auditing engine with an embedded Cyberpunk HUD interface.
 
-![Sentinel Auditor Mobile HUD](assets/hud_preview.jpg)
 
 ## Compliance & Security Standard
 - **Standard**: NIST SP 800-171 Rev 3
