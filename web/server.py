@@ -2,7 +2,9 @@
 import http.server
 import json
 import os
+import re
 import socketserver
+import subprocess  # nosec B404
 import sys
 
 PORT = 8080
@@ -42,6 +44,45 @@ class SentinelRequestHandler(http.server.SimpleHTTPRequestHandler):
                     payload = {"status": "ERROR", "message": str(e)}
 
             self.wfile.write(json.dumps(payload).encode("utf-8"))
+
+        elif self.path == "/api/trace":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            hops = []
+            cmd = ["traceroute", "-n", "-m", "10", "-w", "1", "1.1.1.1"]
+            try:
+                proc = subprocess.run(  # nosec B603
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=15
+                )
+                for line in proc.stdout.strip().split("\n")[1:]:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = re.match(
+                        r"^(\d+)\s+([0-9\.\*]+)\s+([0-9\.]+|\*)\s*ms?",
+                        line
+                    )
+                    if m:
+                        hops.append({
+                            "hop": int(m.group(1)),
+                            "ip": m.group(2),
+                            "rtt_ms": m.group(3)
+                        })
+                    elif "*" in line:
+                        p = line.split()
+                        num = int(p[0]) if p[0].isdigit() else len(hops) + 1
+                        hops.append({"hop": num, "ip": "*", "rtt_ms": "*"})
+            except Exception as e:
+                hops = [{"error": str(e)}]
+
+            self.wfile.write(json.dumps({"hops": hops}).encode("utf-8"))
         else:
             super().do_GET()
 
@@ -51,8 +92,8 @@ def run_server():
     with socketserver.TCPServer(("", PORT), SentinelRequestHandler) as httpd:
         print("-" * 50)
         print(f"GRD SENTINEL // TELEMETRY BRIDGE ONLINE: PORT {PORT}")
-        print(f"API Endpoint : http://localhost:{PORT}/api/telemetry")
-        print("Static Portal: http://localhost:8080")
+        print(f"API Endpoints: /api/telemetry | /api/trace")
+        print(f"Static Portal: http://localhost:{PORT}")
         print("-" * 50)
         try:
             httpd.serve_forever()

@@ -50,6 +50,7 @@ header {
   border: 1px solid var(--border-dim);
   border-radius: 6px;
   padding: 16px;
+  margin-bottom: 16px;
 }
 .card h2 {
   font-size: 0.95rem;
@@ -93,6 +94,18 @@ header {
   white-space: pre-wrap;
   word-break: break-all;
 }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+th, td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-dim);
+}
+th { color: var(--accent-cyan); }
 footer {
   margin-top: 32px;
   border-top: 1px solid var(--border-dim);
@@ -141,6 +154,18 @@ footer {
 </div>
 
 <div class="card">
+  <h2>Transit Hop Route Trace (1.1.1.1)</h2>
+  <table>
+    <thead>
+      <tr><th>Hop</th><th>Node IP</th><th>Latency</th></tr>
+    </thead>
+    <tbody id="trace-body">
+      <tr><td colspan="3">Tracing packet transit...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
   <h2>Live Cryptographic Ledger Head</h2>
   <div class="console-box" id="val-raw-json">Waiting for telemetry bridge...</div>
 </div>
@@ -181,11 +206,31 @@ async function updateHUD() {
       document.getElementById('val-raw-json').textContent = JSON.stringify(rec, null, 2);
     }
   } catch (e) {
-    document.getElementById('val-raw-json').textContent = 'Error contacting bridge: ' + e.message;
+    document.getElementById('val-raw-json').textContent = 'Error: ' + e.message;
   }
 }
+
+async function fetchTrace() {
+  try {
+    const res = await fetch('/api/trace');
+    const data = await res.json();
+    const tbody = document.getElementById('trace-body');
+    if (data.hops && data.hops.length > 0) {
+      tbody.innerHTML = '';
+      data.hops.forEach(h => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${String(h.hop).padStart(2, '0')}</td><td>${h.ip}</td><td>${h.rtt_ms === '*' ? '*' : h.rtt_ms + ' ms'}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+  } catch (e) {
+    console.error('Trace error:', e);
+  }
+}
+
 setInterval(updateHUD, 5000);
 updateHUD();
+fetchTrace();
 </script>
 
 </body>
