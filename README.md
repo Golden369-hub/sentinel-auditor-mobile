@@ -27,3 +27,14 @@ Deterministic, NIST SP 800-171 Rev 3-compliant mobile network telemetry and audi
 ### Run CLI Engine
 ```bash
 python3 grd_mobile_audit.py
+
+## NIST SP 800-171 AU-9 Cryptographic Verification
+
+Sentinel Auditor Mobile implements automated client-side sealing for all exported telemetry audit ledgers.
+
+### Integrity Validation Protocol
+To verify an exported audit file against its AU-9 seal in any POSIX terminal:
+
+```bash
+# Strip the existing au9_sha256_seal field and calculate SHA-256
+jq 'del(.au9_sha256_seal)' sentinel-audit-<timestamp>.json | sha256sum
