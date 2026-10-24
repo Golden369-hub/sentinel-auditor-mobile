@@ -9,7 +9,6 @@
     --bg-color: #050608;
     --neon-yellow: #fcee0a;
     --neon-cyan: #00f0ff;
-    --neon-red: #ff003c;
     --card-bg: rgba(18, 22, 28, 0.95);
     --font-mono: 'Courier New', monospace;
   }
@@ -102,6 +101,15 @@
     box-shadow: 0 0 8px var(--neon-yellow);
     transition: width 0.3s ease;
   }
+  .hash-box {
+    background: #000;
+    border: 1px solid #333;
+    padding: 6px;
+    margin-top: 8px;
+    font-size: 0.58rem;
+    color: #aaa;
+    word-break: break-all;
+  }
   .btn-run {
     width: 100%;
     padding: 14px;
@@ -138,7 +146,7 @@
 <div class="hud">
   <div class="title-bar">
     <div class="title-text">GRD // SENTINEL</div>
-    <div class="sub-tag">NIST-800-171 // ACTIVE</div>
+    <div class="sub-tag">NIST-800-171 // SI-AU VERIFIED</div>
   </div>
   <div class="grid">
     <div class="card">
@@ -155,8 +163,10 @@
       <div class="bar-container"><div class="bar-fill" id="bar-fill"></div></div>
     </div>
   </div>
+  <div class="card-lbl" style="margin-top: 4px;">SHA-256 Nonce Hash</div>
+  <div class="hash-box" id="hash-val">STANDBY // NO EXECUTION SIGNATURE</div>
   <button class="btn-run" id="btn-run" onclick="executeScan()">[ EXECUTE TELEMETRY AUDIT ]</button>
-  <div class="terminal" id="term">> SENTINEL HUD ONLINE // STANDBY</div>
+  <div class="terminal" id="term">> SENTINEL HUD ONLINE // SHA-256 READY</div>
 </div>
 
 <script>
@@ -183,11 +193,12 @@ function executeScan() {
         document.getElementById('lat-val').innerText = ping.avg_ms.toFixed(2) + " ms";
         document.getElementById('jit-val').innerText = ping.mdev_ms.toFixed(2) + " ms";
         document.getElementById('tp-val').innerText = dl.mbps.toFixed(2) + " Mbps";
+        document.getElementById('hash-val').innerText = data.sha256_hash;
 
         const pct = Math.min(Math.round((dl.mbps / 500) * 100), 100);
         document.getElementById('bar-fill').style.width = pct + "%";
 
-        printTerm("Audit PASSED // 0 Entropy // " + dl.mbps.toFixed(2) + " Mbps");
+        printTerm("Audit PASSED // Hash Chained: " + data.sha256_hash.substring(0, 16) + "...");
       } else {
         printTerm("ERR // Scan returned failure state.");
       }

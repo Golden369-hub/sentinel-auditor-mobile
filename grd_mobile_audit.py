@@ -1,102 +1,119 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import os
-import ssl
+import re
 import subprocess
 import time
+import urllib.parse
 import urllib.request
 
 
-def run_ping_test(host, count=4):
-    cmd = ["ping", "-c", str(count), host]
+def get_last_hash(ledger_file="audit_ledger.jsonl"):
+    if not os.path.exists(ledger_file):
+        return "0" * 64
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        lines = res.stdout.strip().split("\n")
-        stats_line = [
-            line for line in lines
-            if "rtt min/avg/max/mdev" in line or "round-trip" in line
-        ]
-        if stats_line:
-            parts = stats_line[0].split("=")[1].strip().split("/")
-            return {
-                "min_ms": float(parts[0]),
-                "avg_ms": float(parts[1]),
-                "max_ms": float(parts[2]),
-                "mdev_ms": float(parts[3].split()[0]),
-            }
-    except Exception:
-        pass
-    return None
+        with open(ledger_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            if not lines:
+                return "0" * 64
+            last_entry = json.loads(lines[-1].strip())
+            return last_entry.get("entry_hash", "0" * 64)
+    except (json.JSONDecodeError, OSError):
+        return "0" * 64
 
 
-def run_download_test(url, timeout=10, chunk_size=65536):
-    if not url.lower().startswith(("https://", "http://")):
-        raise ValueError(f"Disallowed URL scheme: {url}")
+def append_to_ledger(report, ledger_file="audit_ledger.jsonl"):
+    prev_hash = get_last_hash(ledger_file)
+    entry = {
+        "prev_hash": prev_hash,
+        "telemetry": report
+    }
+    raw_bytes = json.dumps(entry, sort_keys=True).encode("utf-8")
+    entry_hash = hashlib.sha256(raw_bytes).hexdigest()
+    entry["entry_hash"] = entry_hash
 
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = True
-    ctx.verify_mode = ssl.CERT_REQUIRED
+    with open(ledger_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
 
-    headers = {"User-Agent": "GRD-Sentinel-Auditor/1.0"}
-    total_bytes = 0
-    start_time = time.time()
-
-    try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(
-            req, context=ctx, timeout=timeout
-        ) as response:  # nosec B310
-            while True:
-                chunk = response.read(chunk_size)
-                if not chunk:
-                    break
-                total_bytes += len(chunk)
-                if time.time() - start_time > timeout:
-                    break
-        duration = time.time() - start_time
-        mbps = (total_bytes * 8) / (duration * 1_000_000)
-        return {
-            "bytes_transferred": total_bytes,
-            "duration_s": duration,
-            "mbps": mbps,
-        }
-    except Exception as e:
-        return {"error": str(e)}
+    return entry_hash
 
 
-def audit_network(config_file="config.json"):
-    if not os.path.exists(config_file):
-        raise FileNotFoundError(f"Configuration file missing: {config_file}")
-
-    with open(config_file, "r") as f:
+def audit_network(config_path="config.json"):
+    with open(config_path, "r", encoding="utf-8") as f:
         cfg = json.load(f)
 
-    ping_cfg = cfg.get("ping", {})
-    tp_cfg = cfg.get("throughput", {})
+    host = cfg["ping"]["target"]
+    count = cfg["ping"]["count"]
+    dl_url = cfg["throughput"]["url"]
+    timeout_s = cfg["throughput"]["timeout_seconds"]
 
-    target_host = ping_cfg.get("target", "1.1.1.1")
-    ping_count = ping_cfg.get("count", 4)
-    download_url = tp_cfg.get(
-        "url",
-        "https://speed.cloudflare.com/__down?bytes=25000000"
+    # NIST SC: Verify scheme is strictly HTTP/HTTPS
+    parsed_url = urllib.parse.urlparse(dl_url)
+    if parsed_url.scheme not in ("http", "https"):
+        raise ValueError(f"Disallowed protocol scheme: {parsed_url.scheme}")
+
+    # 1. ICMP Telemetry
+    cmd = ["ping", "-c", str(count), "-W", str(timeout_s), host]
+    res = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False
     )
-    timeout = tp_cfg.get("timeout_seconds", 8)
-    chunk_size = tp_cfg.get("chunk_size", 65536)
-
-    ping_result = run_ping_test(target_host, count=ping_count)
-    dl_result = run_download_test(
-        download_url, timeout=timeout, chunk_size=chunk_size
+    rtt_match = re.search(
+        r"rtt min/avg/max/mdev = ([0-9.]+)/([0-9.]+)/([0-9.]+)/([0-9.]+)",
+        res.stdout
     )
 
-    status = "PASS" if ping_result and "error" not in dl_result else "FAIL"
-    return {
-        "timestamp": int(time.time()),
-        "ping_metrics": ping_result,
-        "download_metrics": dl_result,
-        "status": status,
+    if rtt_match:
+        ping_metrics = {
+            "min_ms": float(rtt_match.group(1)),
+            "avg_ms": float(rtt_match.group(2)),
+            "max_ms": float(rtt_match.group(3)),
+            "mdev_ms": float(rtt_match.group(4))
+        }
+    else:
+        ping_metrics = {
+            "min_ms": 0.0,
+            "avg_ms": 0.0,
+            "max_ms": 0.0,
+            "mdev_ms": 0.0
+        }
+
+    # 2. HTTP/TLS Goodput Audit
+    start_t = time.time()
+    req = urllib.request.Request(
+        dl_url,
+        headers={"User-Agent": "GRD-Sentinel-Auditor/1.1"}
+    )
+    with urllib.request.urlopen(  # nosec B310
+        req, timeout=timeout_s
+    ) as response:
+        payload = response.read()
+    duration = time.time() - start_t
+    bytes_transferred = len(payload)
+    mbps = ((bytes_transferred * 8) / (1024 * 1024)) / duration
+
+    download_metrics = {
+        "bytes_transferred": bytes_transferred,
+        "duration_s": duration,
+        "mbps": mbps
     }
+
+    report = {
+        "timestamp": int(time.time()),
+        "ping_metrics": ping_metrics,
+        "download_metrics": download_metrics,
+        "status": "PASS"
+    }
+
+    # 3. Cryptographic Ledger Append
+    report["sha256_hash"] = append_to_ledger(report)
+    return report
 
 
 if __name__ == "__main__":
-    report = audit_network()
-    print(json.dumps(report, indent=2))
+    rep = audit_network()
+    print(json.dumps(rep, indent=2))

@@ -3,3 +3,4 @@ __pycache__/
 *.swp
 *.tmp
 
+audit_ledger.jsonl
