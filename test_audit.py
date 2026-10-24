@@ -1,24 +1,28 @@
+#!/usr/bin/env python3
 import json
 import os
 import sys
 
-CONFIG_PATH = os.path.expanduser("~/grd_mobile/config.json")
 
 def test_config_integrity():
-    assert os.path.exists(CONFIG_PATH), "FAIL: config.json missing"
-    with open(CONFIG_PATH, "r") as f:
-        data = json.load(f)
-    assert "ping" in data and "target" in data["ping"], "FAIL: ping configuration invalid"
-    assert "throughput" in data and "url" in data["throughput"], "FAIL: throughput configuration invalid"
+    if not os.path.exists("config.json"):
+        print("[FAIL] config.json missing.")
+        sys.exit(1)
+    with open("config.json", "r") as f:
+        cfg = json.load(f)
+    assert "ping" in cfg and "target" in cfg["ping"], (
+        "FAIL: ping configuration invalid"
+    )
+    assert "throughput" in cfg and "url" in cfg["throughput"], (
+        "FAIL: throughput configuration invalid"
+    )
     print("[PASS] Configuration schema verified.")
 
+
 def main():
-    try:
-        test_config_integrity()
-        print("[PASS] Pre-flight pipeline check successful.")
-    except Exception as e:
-        print(f"[FAIL] Test error: {e}")
-        sys.exit(1)
+    test_config_integrity()
+    print("[PASS] Pre-flight pipeline check successful.")
+
 
 if __name__ == "__main__":
     main()
