@@ -48,12 +48,11 @@ def audit_network(config_path="config.json"):
     dl_url = cfg["throughput"]["url"]
     timeout_s = cfg["throughput"]["timeout_seconds"]
 
-    # NIST SC: Verify scheme is strictly HTTP/HTTPS
     parsed_url = urllib.parse.urlparse(dl_url)
     if parsed_url.scheme not in ("http", "https"):
         raise ValueError(f"Disallowed protocol scheme: {parsed_url.scheme}")
 
-    # 1. ICMP Telemetry
+    # 1. ICMP Burst & Packet Loss Telemetry
     cmd = ["ping", "-c", str(count), "-W", str(timeout_s), host]
     res = subprocess.run(
         cmd,
@@ -62,6 +61,10 @@ def audit_network(config_path="config.json"):
         text=True,
         check=False
     )
+
+    loss_match = re.search(r"(\d+)% packet loss", res.stdout)
+    packet_loss_pct = float(loss_match.group(1)) if loss_match else 0.0
+
     rtt_match = re.search(
         r"rtt min/avg/max/mdev = ([0-9.]+)/([0-9.]+)/([0-9.]+)/([0-9.]+)",
         res.stdout
@@ -72,21 +75,23 @@ def audit_network(config_path="config.json"):
             "min_ms": float(rtt_match.group(1)),
             "avg_ms": float(rtt_match.group(2)),
             "max_ms": float(rtt_match.group(3)),
-            "mdev_ms": float(rtt_match.group(4))
+            "mdev_ms": float(rtt_match.group(4)),
+            "packet_loss_pct": packet_loss_pct
         }
     else:
         ping_metrics = {
             "min_ms": 0.0,
             "avg_ms": 0.0,
             "max_ms": 0.0,
-            "mdev_ms": 0.0
+            "mdev_ms": 0.0,
+            "packet_loss_pct": 100.0
         }
 
     # 2. HTTP/TLS Goodput Audit
     start_t = time.time()
     req = urllib.request.Request(
         dl_url,
-        headers={"User-Agent": "GRD-Sentinel-Auditor/1.1"}
+        headers={"User-Agent": "GRD-Sentinel-Auditor/1.2"}
     )
     with urllib.request.urlopen(  # nosec B310
         req, timeout=timeout_s
@@ -106,7 +111,7 @@ def audit_network(config_path="config.json"):
         "timestamp": int(time.time()),
         "ping_metrics": ping_metrics,
         "download_metrics": download_metrics,
-        "status": "PASS"
+        "status": "PASS" if packet_loss_pct == 0.0 else "DEGRADED"
     }
 
     # 3. Cryptographic Ledger Append
