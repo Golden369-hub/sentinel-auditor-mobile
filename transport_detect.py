@@ -11,7 +11,7 @@ def detect_transport():
         ip_obj = ipaddress.ip_address(local_ip)
 
         # RFC 7335 / RFC 6877: 464XLAT cellular baseband interface
-        clat_network = ipaddress.ip_network("192.0.0.0/29")
+        clat_network = ipaddress.ip_network("192.0.0.0/24")
         # RFC 6598: Carrier-Grade NAT pool
         cgnat_network = ipaddress.ip_network("100.64.0.0/10")
 
