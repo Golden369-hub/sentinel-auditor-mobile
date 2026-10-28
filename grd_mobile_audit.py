@@ -8,6 +8,7 @@ import subprocess
 import time
 import urllib.parse
 import urllib.request
+from transport_detect import detect_transport
 
 
 def get_last_hash(ledger_file="audit_ledger.jsonl"):
@@ -112,6 +113,7 @@ def audit_network(config_path="config.json"):
 
     # 1. Carrier & Routing Metadata
     isp_metrics = audit_isp(timeout_s=timeout_s)
+    transport_metrics = detect_transport()
 
     # 2. ICMP Burst & Packet Loss Telemetry
     cmd = ["ping", "-c", str(count), "-W", str(timeout_s), host]
@@ -180,6 +182,7 @@ def audit_network(config_path="config.json"):
     report = {
         "timestamp": int(time.time()),
         "isp_metrics": isp_metrics,
+        "transport_metrics": transport_metrics,
         "ping_metrics": ping_metrics,
         "dns_metrics": dns_metrics,
         "download_metrics": download_metrics,
