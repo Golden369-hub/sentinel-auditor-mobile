@@ -4,7 +4,7 @@ import json
 import os
 import re
 import socket
-import subprocess
+import subprocess  # nosec B404
 import time
 import urllib.parse
 import urllib.request
@@ -117,7 +117,7 @@ def audit_network(config_path="config.json"):
 
     # 2. ICMP Burst & Packet Loss Telemetry
     cmd = ["ping", "-c", str(count), "-W", str(timeout_s), host]
-    res = subprocess.run(
+    res = subprocess.run(  # nosec B603
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
