@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SENTINEL AUDITOR</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f1117">
 <style>
 :root {
   --bg-color: #050608;
@@ -295,5 +297,21 @@ async function exportAuditJson() {
   printTerm("AUDIT LEDGER EXPORTED (AU-9 SEALED)");
 }
 </script>
+
+  <div style="margin-top: 24px; padding: 16px; text-align: center; border-top: 1px solid #1a2332; font-family: 'Courier New', monospace; font-size: 11px; color: #5a7088;">
+    <div style="color: #00ff66; font-size: 14px; font-weight: bold; letter-spacing: 2px; margin-bottom: 4px;">[ Φ ] GOLDEN RATIO DYNAMICS</div>
+    <div>SENTINEL AUDITOR // PROPRIETARY & CONFIDENTIAL</div>
+    <div style="margin-top: 4px; color: #8892b0;">&copy; 2026 GOLDEN RATIO DYNAMICS. ALL RIGHTS RESERVED.</div>
+    <div style="margin-top: 2px; font-size: 9px; color: #3b4b60;">NIST SP 800-171 AU-9 CRYPTOGRAPHIC LEDGER STANDARD</div>
+  </div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Sentinel SW registered:', reg.scope))
+          .catch(err => console.log('Sentinel SW registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>
