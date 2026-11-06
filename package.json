@@ -1,0 +1,29 @@
+{
+  "name": "grd_mobile",
+  "version": "1.0.0",
+  "description": "[![Live Demo](https://img.shields.io/badge/GitHub_Pages-Live_HUD-00ffcc?style=flat-square&logo=github)](https://golden369-hub.github.io/sentinel-auditor-mobile/)",
+  "main": "sw.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Golden369-hub/sentinel-auditor-mobile.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Golden369-hub/sentinel-auditor-mobile/issues"
+  },
+  "homepage": "https://github.com/Golden369-hub/sentinel-auditor-mobile#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
+  }
+}
