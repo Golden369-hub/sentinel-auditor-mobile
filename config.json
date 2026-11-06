@@ -9,5 +9,10 @@
   },
   "dns": {
     "query_host": "cloudflare.com"
+  },
+  "sla_thresholds": {
+    "max_ping_ms": 100,
+    "min_throughput_mbps": 10.0,
+    "max_dns_ms": 50
   }
 }

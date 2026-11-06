@@ -1,6 +1,7 @@
 import ipaddress
 import socket
 
+
 def detect_transport():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
