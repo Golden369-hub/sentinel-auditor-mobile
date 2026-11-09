@@ -313,5 +313,15 @@ async function exportAuditJson() {
       });
     }
   </script>
+<script src="true_signal_calculator.js"></script>
+<script>
+function updateSignalDisplay(rsrp) {
+    const bars = calculateTrueSignalBars(rsrp);
+    const display = document.getElementById("true-signal-bars") || document.createElement("div");
+    display.id = "true-signal-bars";
+    display.innerHTML = `True Signal: ${bars} / 4 Bars (${rsrp} dBm)`;
+    if (!document.getElementById("true-signal-bars")) document.body.appendChild(display);
+}
+</script>
 </body>
 </html>
