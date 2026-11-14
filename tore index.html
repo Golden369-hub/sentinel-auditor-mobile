@@ -1,0 +1,40 @@
+[1mdiff --git a/index.html b/index.html[m
+[1mindex f427bdb..55299bc 100644[m
+[1m--- a/index.html[m
+[1m+++ b/index.html[m
+[36m@@ -296,6 +296,13 @@[m [masync function exportAuditJson() {[m
+   URL.revokeObjectURL(downloadUrl);[m
+   printTerm("AUDIT LEDGER EXPORTED (AU-9 SEALED)");[m
+ }[m
+[32m+[m[32mfunction updateSignalDisplay(rsrp) {[m
+[32m+[m[32m    const bars = calculateTrueSignalBars(rsrp);[m
+[32m+[m[32m    const display = document.getElementById("true-signal-bars") || document.createElement("div");[m
+[32m+[m[32m    display.id = "true-signal-bars";[m
+[32m+[m[32m    display.innerHTML = `True Signal: ${bars} / 4 Bars (${rsrp} dBm)`;[m
+[32m+[m[32m    if (!document.getElementById("true-signal-bars")) document.body.appendChild(display);[m
+[32m+[m[32m}[m
+ </script>[m
+ [m
+   <div style="margin-top: 24px; padding: 16px; text-align: center; border-top: 1px solid #1a2332; font-family: 'Courier New', monospace; font-size: 11px; color: #5a7088;">[m
+[36m@@ -312,6 +319,21 @@[m [masync function exportAuditJson() {[m
+           .catch(err => console.log('Sentinel SW registration failed:', err));[m
+       });[m
+     }[m
+[32m+[m[32mfunction updateSignalDisplay(rsrp) {[m
+[32m+[m[32m    const bars = calculateTrueSignalBars(rsrp);[m
+[32m+[m[32m    const display = document.getElementById("true-signal-bars") || document.createElement("div");[m
+[32m+[m[32m    display.id = "true-signal-bars";[m
+[32m+[m[32m    display.innerHTML = `True Signal: ${bars} / 4 Bars (${rsrp} dBm)`;[m
+[32m+[m[32m    if (!document.getElementById("true-signal-bars")) document.body.appendChild(display);[m
+[32m+[m[32m}[m
+   </script>[m
+[32m+[m[32mfunction updateSignalDisplay(rsrp) {[m
+[32m+[m[32m    const bars = calculateTrueSignalBars(rsrp);[m
+[32m+[m[32m    const display = document.getElementById("true-signal-bars") || document.createElement("div");[m
+[32m+[m[32m    display.id = "true-signal-bars";[m
+[32m+[m[32m    display.innerHTML = `True Signal: ${bars} / 4 Bars (${rsrp} dBm)`;[m
+[32m+[m[32m    if (!document.getElementById("true-signal-bars")) document.body.appendChild(display);[m
+[32m+[m[32m}[m
+[32m+[m[32m<script src="true_signal_calculator.js"></script>[m
+ </body>[m
+ </html>[m

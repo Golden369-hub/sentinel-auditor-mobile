@@ -21,8 +21,7 @@ body {
   font-family: var(--font-mono);
   margin: 0;
   padding: 12px;
-  display: flex;
-  justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-x: hidden;
 }
 body::before {
   content: "";
@@ -39,7 +38,7 @@ body::before {
   background: var(--card-bg);
   border: 2px solid var(--neon-cyan);
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-  clip-path: polygon(0 0, 92% 0, 100% 5%, 100% 100%, 0 100%);
+  clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
   padding: 16px;
   box-sizing: border-box;
 }
@@ -121,7 +120,7 @@ body::before {
   color: #aaa;
   word-break: break-all;
 }
-.btn-run {
+.btn-run { position: relative; z-index: 1000; 
   width: 100%;
   padding: 14px;
   margin-top: 10px;
@@ -131,7 +130,7 @@ body::before {
   font-size: 0.95rem;
   font-weight: 900;
   letter-spacing: 2px;
-  clip-path: polygon(0 0, 95% 0, 100% 30%, 100% 100%, 5% 100%, 0 70%);
+  clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
   box-shadow: 0 0 12px rgba(252, 238, 10, 0.6);
   text-transform: uppercase;
   border: none;
@@ -141,7 +140,7 @@ body::before {
   background: #e5d809;
   transform: scale(0.98);
 }
-.btn-export {
+.btn-export { position: relative; z-index: 1000; 
   width: 100%;
   padding: 12px;
   margin-top: 8px;
@@ -151,7 +150,7 @@ body::before {
   font-size: 0.85rem;
   font-weight: 900;
   letter-spacing: 1.5px;
-  clip-path: polygon(0 0, 95% 0, 100% 30%, 100% 100%, 5% 100%, 0 70%);
+  clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
   box-shadow: 0 0 12px rgba(0, 255, 102, 0.4);
   text-transform: uppercase;
   border: none;
@@ -205,98 +204,19 @@ body::before {
       <div class="bar-container"><div class="bar-fill" id="bar-fill"></div></div>
     </div>
   </div>
-  <div class="card-lbl" style="margin-top: 4px;">Telemetry SHA-256 Ledger</div>
+  <div class="card card-wide">
+<div class="card-lbl">True Signal RSRP // Bars</div>
+<div class="card-val" id="signal-val">STANDBY <span style="font-size:0.7rem; color:var(--neon-cyan)">-- dBm</span></div>
+<div id="cyberpunk-signal-bar" style="font-size: 1.2rem; margin-top: 4px; letter-spacing: 2px;"></div>
+</div>
+<div class="card-lbl" style="margin-top: 4px;">Telemetry SHA-256 Ledger</div>
   <div class="hash-box" id="hash-val">STANDBY // ZERO-DRIFT</div>
   <button class="btn-run" id="btn-run" onclick="executeScan()">[ EXECUTE TELEMETRY AUDIT ]</button>
   <button class="btn-export" id="btn-export" onclick="exportAuditJson()">[ EXPORT AUDIT LEDGER (JSON) ]</button>
   <div class="terminal" id="term">> SENTINEL HUD READY</div>
 </div>
 
-<script>
-let currentAuditRecord = null;
 
-function printTerm(msg) {
-  const t = document.getElementById('term');
-  t.innerHTML += '<br>' + msg;
-  t.scrollTop = t.scrollHeight;
-}
-
-function executeScan() {
-  const btn = document.getElementById('btn-run');
-  btn.disabled = true;
-  btn.innerText = '[ ENGAGED // RUNNING... ]';
-  printTerm('Starting multi-vector carrier audit...');
-
-  fetch('/api/run_audit')
-const data={isp:'Cloudflare Edge ('+colo+') // '+ip,ping_ms,loss_pct:0,download_mbps,sha256,timestamp:ts};
-    .then(data => {
-      btn.disabled = false;
-      btn.innerText = '[ EXECUTE TELEMETRY AUDIT ]';
-      currentAuditRecord = data;
-
-      const ping = data.ping_metrics || {};
-      const dl = data.download_metrics || {};
-      const dns = data.dns_metrics || {};
-      const isp = data.isp_metrics || {};
-      const hash = data.sha256_hash || "ZERO-DRIFT";
-
-      document.getElementById('isp-val').innerText = (isp.isp || 'UNKNOWN') + ' [' + (isp.asn || 'AS--') + ']';
-      document.getElementById('lat-val').innerHTML = Number(ping.avg_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>';
-      document.getElementById('jit-val').innerHTML = Number(ping.mdev_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>';
-      document.getElementById('loss-val').innerText = (ping.packet_loss_pct || 0) + '%';
-      document.getElementById('dns-val').innerHTML = Number(dns.latency_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>';
-      document.getElementById('tp-val').innerHTML = Number(dl.mbps || 0).toFixed(2) + ' <span style="font-size:0.7rem">Mbps</span>';
-      document.getElementById('hash-val').innerText = hash;
-
-      const pct = Math.min(Math.round(((dl.mbps || 0) / 500) * 100), 100);
-      document.getElementById('bar-fill').style.width = pct + '%';
-
-      printTerm("Carrier: " + (isp.isp || 'ISP') + " [" + (isp.asn || '') + "] (" + (isp.city || '') + ", " + (isp.region || '') + ")");
-      printTerm("Audit PASS // " + hash.substring(0, 16) + "...");
-    })
-    .catch(err => {
-      btn.disabled = false;
-      btn.innerText = '[ EXECUTE TELEMETRY AUDIT ]';
-      printTerm("FATAL // " + err);
-    });
-}
-
-async function exportAuditJson() {
-  if (!currentAuditRecord) {
-    printTerm("WARN // Execute telemetry audit prior to ledger export.");
-    return;
-  }
-
-  const exportPayload = {
-    framework: "GRD Sentinel Auditor Mobile",
-    compliance_standard: "NIST SP 800-171 AU-9",
-    export_timestamp: new Date().toISOString(),
-    audit_data: currentAuditRecord,
-    system_integrity: "ZERO_DRIFT"
-  };
-
-  const rawJson = JSON.stringify(exportPayload, null, 2);
-  const encoder = new TextEncoder();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(rawJson));
-  const sha256 = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
-
-  const sealedRecord = {
-    ...exportPayload,
-    au9_sha256_seal: sha256
-  };
-
-  const blob = new Blob([JSON.stringify(sealedRecord, null, 2)], { type: "application/json" });
-  const downloadUrl = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = downloadUrl;
-  link.download = `sentinel-audit-${Date.now()}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(downloadUrl);
-  printTerm("AUDIT LEDGER EXPORTED (AU-9 SEALED)");
-}
-</script>
 
   <div style="margin-top: 24px; padding: 16px; text-align: center; border-top: 1px solid #1a2332; font-family: 'Courier New', monospace; font-size: 11px; color: #5a7088;">
     <div style="color: #00ff66; font-size: 14px; font-weight: bold; letter-spacing: 2px; margin-bottom: 4px;">[ Φ ] GOLDEN RATIO DYNAMICS</div>
@@ -304,14 +224,144 @@ async function exportAuditJson() {
     <div style="margin-top: 4px; color: #8892b0;">&copy; 2026 GOLDEN RATIO DYNAMICS. ALL RIGHTS RESERVED.</div>
     <div style="margin-top: 2px; font-size: 9px; color: #3b4b60;">NIST SP 800-171 AU-9 CRYPTOGRAPHIC LEDGER STANDARD</div>
   </div>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('Sentinel SW registered:', reg.scope))
-          .catch(err => console.log('Sentinel SW registration failed:', err));
-      });
+  
+
+
+
+<script>
+window.onerror = function(m, s, l, c, e) {
+    const t = document.getElementById('term');
+    if(t) {
+        t.innerHTML += '<br><span style="color:#ff3344">FATAL // ' + m + ' (Line ' + l + ')</span>';
+        t.scrollTop = t.scrollHeight;
     }
-  </script>
+};
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(r => r.forEach(x => x.unregister()));
+}
+
+function calculateTrueSignalBars(rsrp_dbm) {
+    if (rsrp_dbm == null) return 0;
+    const r = Number(rsrp_dbm);
+    if (r >= -85) return 4;
+    if (r >= -95) return 3;
+    if (r >= -105) return 2;
+    if (r >= -115) return 1;
+    return 0;
+}
+
+let currentAuditRecord = null;
+
+function printTerm(msg) {
+    const t = document.getElementById('term');
+    if(t) {
+        t.innerHTML += '<br>' + msg;
+        t.scrollTop = t.scrollHeight;
+    }
+}
+
+function executeScan() {
+    const btn = document.getElementById('btn-run');
+    if(btn) {
+        btn.disabled = true;
+        btn.innerText = '[ ENGAGED // RUNNING... ]';
+    }
+    printTerm('Starting multi-vector carrier audit...');
+
+    fetch('http://127.0.0.1:8080/api/run_audit')
+        .then(res => res.json())
+        .then(data => {
+            if(btn) {
+                btn.disabled = false;
+                btn.innerText = '[ EXECUTE TELEMETRY AUDIT ]';
+            }
+            currentAuditRecord = data;
+
+            const ping = data.ping_metrics || {};
+            const dl = data.download_metrics || {};
+            const dns = data.dns_metrics || {};
+            const isp = data.isp_metrics || {};
+            const hash = data.sha256_hash || "ZERO-DRIFT";
+            const cell = data.cellular_metrics || {};
+
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+            
+            setVal('isp-val', (isp.isp || 'UNKNOWN') + ' [' + (isp.asn || 'AS--') + ']');
+            setVal('lat-val', Number(ping.avg_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
+            setVal('jit-val', Number(ping.mdev_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
+            setVal('loss-val', (ping.packet_loss_pct || 0) + '%');
+            setVal('dns-val', Number(dns.latency_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
+            setVal('tp-val', Number(dl.mbps || 0).toFixed(2) + ' <span style="font-size:0.7rem">Mbps</span>');
+            
+            const hashEl = document.getElementById('hash-val');
+            if(hashEl) hashEl.innerText = hash;
+
+            const pct = Math.min(Math.round(((dl.mbps || 0) / 500) * 100), 100);
+            const barFill = document.getElementById('bar-fill');
+            if(barFill) barFill.style.width = pct + '%';
+
+            if (cell.rsrp_dbm) {
+                const signalVal = document.getElementById('signal-val');
+                const signalBar = document.getElementById('cyberpunk-signal-bar');
+                if (signalVal && signalBar) {
+                    const bars = calculateTrueSignalBars(cell.rsrp_dbm);
+                    signalVal.innerHTML = bars + ' BARS <span style="font-size:0.7rem; color:var(--neon-cyan)">' + cell.rsrp_dbm + ' dBm</span>';
+                    let meter = ""; let c = "";
+                    if (bars === 4) { meter = "████"; c = "#00ff66"; }
+                    else if (bars === 3) { meter = "███░"; c = "#FEE00A"; }
+                    else if (bars === 2) { meter = "██░░"; c = "#ff9900"; }
+                    else { meter = "█░░░"; c = "#ff3344"; }
+                    signalBar.innerText = meter;
+                    signalBar.style.color = c;
+                }
+            }
+
+            printTerm("Carrier: " + (isp.isp || 'ISP') + " [" + (isp.asn || '') + "] (" + (isp.city || '') + ", " + (isp.region || '') + ")");
+            printTerm("Audit PASS // " + hash.substring(0, 16) + "...");
+        })
+        .catch(err => {
+            if(btn) {
+                btn.disabled = false;
+                btn.innerText = '[ EXECUTE TELEMETRY AUDIT ]';
+            }
+            printTerm("FATAL // " + err);
+        });
+}
+
+async function exportAuditJson() {
+    if (!currentAuditRecord) {
+        printTerm("WARN // Execute telemetry audit prior to ledger export.");
+        return;
+    }
+    const exportPayload = {
+        framework: "GRD Sentinel Auditor Mobile",
+        compliance_standard: "NIST SP 800-171 AU-9",
+        export_timestamp: new Date().toISOString(),
+        audit_data: currentAuditRecord,
+        system_integrity: "ZERO_DRIFT"
+    };
+    const rawJson = JSON.stringify(exportPayload, null, 2);
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(rawJson));
+    const sha256 = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const sealedRecord = {
+        ...exportPayload,
+        au9_sha256_seal: sha256
+    };
+    const blob = new Blob([JSON.stringify(sealedRecord, null, 2)], { type: "application/json" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `sentinel-audit-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+    printTerm("AUDIT LEDGER EXPORTED (AU-9 SEALED)");
+}
+</script>
+
 </body>
 </html>

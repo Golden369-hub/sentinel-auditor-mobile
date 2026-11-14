@@ -1,18 +1,13 @@
 {
   "ping": {
     "target": "1.1.1.1",
-    "count": 5
+    "count": 4
   },
   "throughput": {
     "url": "https://speed.cloudflare.com/__down?bytes=50000000",
-    "timeout_seconds": 10
+    "timeout_seconds": 15
   },
   "dns": {
     "query_host": "cloudflare.com"
-  },
-  "sla_thresholds": {
-    "max_ping_ms": 100,
-    "min_throughput_mbps": 10.0,
-    "max_dns_ms": 50
   }
 }
