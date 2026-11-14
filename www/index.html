@@ -20,26 +20,21 @@ body {
   color: #e0e0e0;
   font-family: var(--font-mono);
   margin: 0;
-  padding: 12px;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-x: hidden;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
-body::before {
-  content: "";
-  position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  background-size: 100% 3px, 6px 100%;
-  pointer-events: none;
-  z-index: 100;
-}
+/* scanlines removed */
 .hud {
   width: 100%;
   max-width: 440px;
   background: var(--card-bg);
-  border: 2px solid var(--neon-cyan);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-  clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
-  padding: 16px;
+  border: 1px solid #1a2332;
+  padding: 10px;
   box-sizing: border-box;
 }
 .title-bar {
@@ -65,17 +60,19 @@ body::before {
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 .card {
   background: rgba(0, 0, 0, 0.7);
-  border-left: 3px solid var(--neon-cyan);
-  padding: 8px 10px;
+  border: 1px solid #1a2332;
+  border-left: 2px solid var(--neon-cyan);
+  padding: 4px 6px;
+  box-sizing: border-box;
 }
 .card-wide {
   grid-column: span 2;
-  border-left-color: var(--neon-yellow);
+  border-left: 2px solid var(--neon-yellow);
 }
 .card-lbl {
   font-size: 0.65rem;
@@ -169,6 +166,149 @@ body::before {
   font-size: 0.65rem;
   color: var(--neon-cyan);
 }
+
+  /* GENERATION BADGE RACK CSS */
+.gen-badge-rack {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 3px 0 4px 0;
+}
+.gen-badge {
+  flex: 1;
+  text-align: center;
+  font-size: 0.62rem;
+  font-family: monospace;
+  padding: 1px 1px;
+  border-radius: 2px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1e293b;
+  color: #475569;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+.gen-badge.active-cell {
+  border-color: #00f3ff;
+  color: #00f3ff;
+  background: rgba(0, 243, 255, 0.12);
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.35);
+  font-weight: bold;
+}
+.gen-badge.active-wifi {
+  border-color: #00ff66;
+  color: #00ff66;
+  background: rgba(0, 255, 102, 0.12);
+  box-shadow: 0 0 8px rgba(0, 255, 102, 0.35);
+  font-weight: bold;
+}
+
+/* VINTAGE HARDWARE EQUALIZER LADDER CSS */
+  .vu-meter {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 20px;
+    margin-top: 3px;
+    padding: 2px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid #222;
+  }
+  .vu-column {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 3px;
+    flex: 1;
+    height: 100%;
+    justify-content: flex-start;
+  }
+  .vu-seg {
+    height: 3px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 1px;
+    transition: background 0.12s ease, box-shadow 0.12s ease;
+  }
+  .vu-seg.lit-green {
+    background: #00ff66;
+    box-shadow: 0 0 5px rgba(0, 255, 102, 0.7);
+  }
+  .vu-seg.lit-yellow {
+    background: #FEE00A;
+    box-shadow: 0 0 5px rgba(254, 224, 10, 0.7);
+  }
+  .vu-seg.lit-cyan {
+    background: #00f3ff;
+    box-shadow: 0 0 6px rgba(0, 243, 255, 0.85);
+  }
+  .vu-seg.peak-hold {
+    background: #ffffff;
+    box-shadow: 0 0 7px #ffffff;
+  }
+
+
+/* 4-Bar Ascending Signal Indicator */
+.sig-bar-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 14px;
+  margin-top: 4px;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid #1a2332;
+  border-radius: 2px;
+}
+.sig-bar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.sig-bar:nth-child(1) { height: 25%; }
+.sig-bar:nth-child(2) { height: 50%; }
+.sig-bar:nth-child(3) { height: 75%; }
+.sig-bar:nth-child(4) { height: 100%; }
+.sig-bar.lit-active {
+  background: #00ff66 !important;
+  box-shadow: 0 0 6px rgba(0, 255, 102, 0.6);
+}
+
+
+/* OPTION 2: CYBERPUNK SEGMENTED LADDER */
+.ladder-track {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 22px;
+  margin-top: 4px;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid #1a2332;
+  border-radius: 2px;
+}
+.ladder-col {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  flex: 1;
+}
+.ladder-col:nth-child(1) { height: 35%; }
+.ladder-col:nth-child(2) { height: 55%; }
+.ladder-col:nth-child(3) { height: 78%; }
+.ladder-col:nth-child(4) { height: 100%; }
+
+.ladder-slab {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 1px;
+}
+.ladder-col.lit .ladder-slab {
+  background: #00ff66 !important;
+  box-shadow: 0 0 4px rgba(0, 255, 102, 0.8);
+}
+
 </style>
 </head>
 <body>
@@ -183,19 +323,19 @@ body::before {
       <div class="card-val-sm" id="isp-val">STANDBY...</div>
     </div>
     <div class="card">
-      <div class="card-lbl">Latency (Avg)</div>
-      <div class="card-val" id="lat-val">--<span style="font-size:0.7rem"> ms</span></div>
+      <div class="card-lbl">HTTP RTT (Edge)</div>
+      <div class="card-val" id="rtt-val">--<span style="font-size:0.7rem"> ms</span></div>
     </div>
     <div class="card">
       <div class="card-lbl">Jitter (Mdev)</div>
       <div class="card-val" id="jit-val">--<span style="font-size:0.7rem"> ms</span></div>
     </div>
     <div class="card">
-      <div class="card-lbl">Packet Loss</div>
-      <div class="card-val" id="loss-val" style="color:var(--neon-cyan)">0.0%</div>
+      <div class="card-lbl">Bufferbloat (Δ)</div>
+      <div class="card-val" id="bloat-val" style="color:var(--neon-cyan)">--</div>
     </div>
     <div class="card">
-      <div class="card-lbl">DNS Latency</div>
+      <div class="card-lbl">DNS Resolution</div>
       <div class="card-val" id="dns-val">--<span style="font-size:0.7rem"> ms</span></div>
     </div>
     <div class="card card-wide">
@@ -204,11 +344,27 @@ body::before {
       <div class="bar-container"><div class="bar-fill" id="bar-fill"></div></div>
     </div>
   </div>
-  <div class="card card-wide">
-<div class="card-lbl">True Signal RSRP // Bars</div>
+  <div class="card">
+<div class="card-lbl">Cellular RSRP</div>
 <div class="card-val" id="signal-val">STANDBY <span style="font-size:0.7rem; color:var(--neon-cyan)">-- dBm</span></div>
-<div id="cyberpunk-signal-bar" style="font-size: 1.2rem; margin-top: 4px; letter-spacing: 2px;"></div>
-</div>
+<div class="gen-badge-rack" id="cell-gen-rack">
+          <div class="gen-badge" id="badge-cell-3g">[ 3G ]</div>
+          <div class="gen-badge" id="badge-cell-4g">[ 4G ]</div>
+          <div class="gen-badge" id="badge-cell-lte">[ LTE ]</div>
+          <div class="gen-badge" id="badge-cell-5g">[ 5G ]</div>
+          <div class="gen-badge" id="badge-cell-5gp">[ 5G+ ]</div>
+        </div>
+        <div id="cyberpunk-signal-bar" class="ladder-track"><div class="ladder-col"><div class="ladder-slab"></div></div><div class="ladder-col"><div class="ladder-slab"></div><div class="ladder-slab"></div></div><div class="ladder-col"><div class="ladder-slab"></div><div class="ladder-slab"></div><div class="ladder-slab"></div></div><div class="ladder-col"><div class="ladder-slab"></div><div class="ladder-slab"></div><div class="ladder-slab"></div><div class="ladder-slab"></div></div></div></div>
+<div class="card">
+<div class="card-lbl">Wi-Fi RSSI</div>
+<div class="card-val" id="wifi-signal-val">STANDBY <span style="font-size:0.7rem; color:var(--neon-cyan)">-- dBm</span></div>
+<div class="gen-badge-rack" id="wifi-gen-rack">
+          <div class="gen-badge" id="badge-wifi-4">[ Wi-Fi 4 ]</div>
+          <div class="gen-badge" id="badge-wifi-5">[ Wi-Fi 5 ]</div>
+          <div class="gen-badge" id="badge-wifi-6">[ Wi-Fi 6 ]</div>
+          <div class="gen-badge" id="badge-wifi-7">[ Wi-Fi 7 ]</div>
+        </div>
+        <div id="cyberpunk-wifi-bar" class="ladder-track"><div class="ladder-col"><div class="ladder-slab"></div></div><div class="ladder-col"><div class="ladder-slab"></div><div class="ladder-slab"></div></div><div class="ladder-col"><div class="ladder-slab"></div><div class="ladder-slab"></div><div class="ladder-slab"></div></div><div class="ladder-col"><div class="ladder-slab"></div><div class="ladder-slab"></div><div class="ladder-slab"></div><div class="ladder-slab"></div></div></div></div>
 <div class="card-lbl" style="margin-top: 4px;">Telemetry SHA-256 Ledger</div>
   <div class="hash-box" id="hash-val">STANDBY // ZERO-DRIFT</div>
   <button class="btn-run" id="btn-run" onclick="executeScan()">[ EXECUTE TELEMETRY AUDIT ]</button>
@@ -228,7 +384,23 @@ body::before {
 
 
 
+<script src="true_signal_calculator.js"></script>
 <script>
+
+function renderVuMeter(meterId, bars, isActive) {
+  const meter = document.getElementById(meterId);
+  if (!meter) return;
+  const cols = meter.querySelectorAll(".ladder-col");
+  const count = (isActive && bars) ? parseInt(bars, 10) : 0;
+  cols.forEach((col, idx) => {
+    if (idx < count) {
+      col.classList.add("lit");
+    } else {
+      col.classList.remove("lit");
+    }
+  });
+}
+
 window.onerror = function(m, s, l, c, e) {
     const t = document.getElementById('term');
     if(t) {
@@ -269,8 +441,7 @@ function executeScan() {
     }
     printTerm('Starting multi-vector carrier audit...');
 
-    fetch('http://127.0.0.1:8080/api/run_audit')
-        .then(res => res.json())
+    (fetch('/api/run_audit').then(r => { if(!r.ok) throw 1; return r.json(); }).catch(() => { printTerm('STANDALONE // Executing on-device audit...'); return executeSelfHostedAudit(); }))
         .then(data => {
             if(btn) {
                 btn.disabled = false;
@@ -284,38 +455,59 @@ function executeScan() {
             const isp = data.isp_metrics || {};
             const hash = data.sha256_hash || "ZERO-DRIFT";
             const cell = data.cellular_metrics || {};
+        const wifi = data.wifi_metrics || {};
 
             const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
             
             setVal('isp-val', (isp.isp || 'UNKNOWN') + ' [' + (isp.asn || 'AS--') + ']');
-            setVal('lat-val', Number(ping.avg_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
+            setVal('rtt-val', Number(ping.http_rtt_ms || ping.unloaded_avg_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
             setVal('jit-val', Number(ping.mdev_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
-            setVal('loss-val', (ping.packet_loss_pct || 0) + '%');
+            setVal('bloat-val', '+' + Number(ping.bufferbloat_delta_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
             setVal('dns-val', Number(dns.latency_ms || 0).toFixed(2) + '<span style="font-size:0.7rem"> ms</span>');
             setVal('tp-val', Number(dl.mbps || 0).toFixed(2) + ' <span style="font-size:0.7rem">Mbps</span>');
             
             const hashEl = document.getElementById('hash-val');
             if(hashEl) hashEl.innerText = hash;
 
-            const pct = Math.min(Math.round(((dl.mbps || 0) / 500) * 100), 100);
+            const pct = Math.min(Math.round(((dl.mbps || 0) / 2000) * 100), 100);
             const barFill = document.getElementById('bar-fill');
-            if(barFill) barFill.style.width = pct + '%';
+            if(barFill) barFill.style.width = pct + '%';        // Cellular & Wi-Fi Dynamic Generation Badges & Meters
+        document.querySelectorAll("#cell-gen-rack .gen-badge").forEach(b => b.classList.remove("active-cell"));
+        document.querySelectorAll("#wifi-gen-rack .gen-badge").forEach(b => b.classList.remove("active-wifi"));
 
-            if (cell.rsrp_dbm) {
-                const signalVal = document.getElementById('signal-val');
-                const signalBar = document.getElementById('cyberpunk-signal-bar');
-                if (signalVal && signalBar) {
-                    const bars = calculateTrueSignalBars(cell.rsrp_dbm);
-                    signalVal.innerHTML = bars + ' BARS <span style="font-size:0.7rem; color:var(--neon-cyan)">' + cell.rsrp_dbm + ' dBm</span>';
-                    let meter = ""; let c = "";
-                    if (bars === 4) { meter = "████"; c = "#00ff66"; }
-                    else if (bars === 3) { meter = "███░"; c = "#FEE00A"; }
-                    else if (bars === 2) { meter = "██░░"; c = "#ff9900"; }
-                    else { meter = "█░░░"; c = "#ff3344"; }
-                    signalBar.innerText = meter;
-                    signalBar.style.color = c;
-                }
+        const sigVal = document.getElementById("signal-val");
+        const sigBar = document.getElementById("cyberpunk-signal-bar");
+        if (sigVal && sigBar) {
+          if (cell.active && cell.rsrp_dbm) {
+            const bars = calculateTrueSignalBars(cell.rsrp_dbm);
+            sigVal.innerHTML = bars + " BARS <span style=\"font-size:0.7rem; color:var(--neon-cyan)\">" + cell.rsrp_dbm + " dBm</span>";
+            renderVuMeter("cyberpunk-signal-bar", bars, true);
+            if (cell.gen) {
+              const bCell = document.getElementById("badge-cell-" + cell.gen);
+              if (bCell) bCell.classList.add("active-cell");
             }
+          } else {
+            sigVal.innerHTML = "STANDBY <span style=\"font-size:0.7rem; color:var(--neon-cyan)\">-- dBm</span>";
+            renderVuMeter("cyberpunk-signal-bar", 0, false);
+          }
+        }
+
+        const wifiVal = document.getElementById("wifi-signal-val");
+        const wifiBar = document.getElementById("cyberpunk-wifi-bar");
+        if (wifiVal && wifiBar) {
+          if (wifi.active && wifi.rssi_dbm) {
+            const wBars = calculateTrueSignalBars(wifi.rssi_dbm);
+            wifiVal.innerHTML = wBars + " BARS <span style=\"font-size:0.7rem; color:var(--neon-cyan)\">" + wifi.rssi_dbm + " dBm</span>";
+            renderVuMeter("cyberpunk-wifi-bar", wBars, true);
+            if (wifi.gen) {
+              const bWifi = document.getElementById("badge-" + wifi.gen);
+              if (bWifi) bWifi.classList.add("active-wifi");
+            }
+          } else {
+            wifiVal.innerHTML = "STANDBY <span style=\"font-size:0.7rem; color:var(--neon-cyan)\">-- dBm</span>";
+            renderVuMeter("cyberpunk-wifi-bar", 0, false);
+          }
+        }
 
             printTerm("Carrier: " + (isp.isp || 'ISP') + " [" + (isp.asn || '') + "] (" + (isp.city || '') + ", " + (isp.region || '') + ")");
             printTerm("Audit PASS // " + hash.substring(0, 16) + "...");
