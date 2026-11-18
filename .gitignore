@@ -7,3 +7,14 @@ audit_ledger.jsonl
 sentinel_compliance_export.csv
 audit_ledger.jsonl
 __pycache__/
+node_modules/
+android/app/build/
+android/.gradle/
+android/build/
+*.apk
+*.aab
+*.jks
+*.keystore
+*.STEP6*
+*.PERMANENT*
+android/keystore.properties

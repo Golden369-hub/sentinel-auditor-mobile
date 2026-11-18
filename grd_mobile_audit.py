@@ -99,8 +99,8 @@ def audit_dns(query_host):
 
 def audit_cellular():
     try:
-        import subprocess, json
-        res = subprocess.run(["termux-telephony-cellinfo"], capture_output=True, text=True)
+        import subprocess, json  # nosec B404
+        res = subprocess.run(["/data/data/com.termux/files/usr/bin/termux-telephony-cellinfo"], capture_output=True, text=True)  # nosec B603
         cells = json.loads(res.stdout)
         for cell in cells:
             if cell.get("registered", False):

@@ -1,0 +1,26 @@
+=== GOOGLE PLAY STORE LISTING METADATA ===
+
+[APP NAME] (Limit: 30 chars)
+Sentinel Network Auditor
+
+[SHORT DESCRIPTION] (Limit: 80 chars)
+Deterministic zero-telemetry network latency, cipher audit, and radio diagnostics.
+
+[FULL DESCRIPTION] (Limit: 4000 chars)
+Sentinel Network Auditor by Golden Ratio Dynamics provides deterministic, precision network diagnostics built for security professionals, system administrators, and infrastructure engineers.
+
+Engineered with a strict zero-telemetry architectural standard, Sentinel executes all calculations, latency benchmarks, and radio frequency audits strictly on the local device. No telemetry, device metrics, or diagnostic logs are ever transmitted, sold, or shared with third-party brokers.
+
+CORE DIAGNOSTIC CAPABILITIES:
+- Round-Trip Time (RTT) & Jitter Analysis: Real-time latency measurement with bufferbloat detection.
+- DNS Resolution Speed: Benchmark upstream resolver latency and response consistency.
+- Throughput Auditing: Evaluate interface bandwidth without bloated tracking dependencies.
+- Wi-Fi Radio Inspection: Real-time RSSI signal auditing, channel frequency analysis, and cipher suite identification.
+- Cellular Radio Metrics: Monitor carrier interface parameters including RSRP and active frequency bands.
+- Local Cryptographic Audit Ledger: Maintain verifiable SHA-256 integrity logs of diagnostic sessions directly on device storage.
+
+NIST 800-171 & ZERO-TRUST ALIGNMENT:
+Designed for high-assurance enterprise and operational environments requiring verifiable privacy, transparent source auditing, and uncompromised local execution.
+
+Developer: Golden Ratio Dynamics
+Support: contact@goldenratiodynamics.com
